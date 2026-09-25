@@ -74,7 +74,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   <h1>軟組織超音波報告</h1>
   <label class="inline">檢查日期 <input type="date" id="date"></label>
   <label class="inline">報告語言
-    <select id="lang"><option value="zh">中文</option><option value="en">English</option></select>
+    <select id="lang"><option value="en" selected>English</option><option value="zh">中文</option></select>
   </label>
   <span class="spacer"></span>
   <button class="primary" id="btnOutput">輸出當日所有報告</button>
@@ -329,7 +329,8 @@ function buildReport(date, serial, L){
       const items = fs.map(f => { const v = ex.v[`${st.id}.${f.id}`];
         const t = zh ? f.zh : f.en; return v ? (zh ? `${t}，約 ${v} ${f.unit}` : `${t}, ${v} ${f.unit}`) : t; });
       out.push(zh ? `- ${st.zh}：${items.join('；')}。` : `- ${st.en}: ${items.join('; ')}.`);
-      abnImp.push(zh ? `${st.zh}${fs.map(f=>f.zh).join('、')}` : `${st.en} ${fs.map(f=>f.en).join(', ')}`);
+      const lc = /^Achilles/.test(st.en) ? st.en : st.en[0].toLowerCase() + st.en.slice(1);
+      abnImp.push(zh ? `${st.zh}${fs.map(f=>f.zh).join('、')}` : `${fs.map(f=>f.en).join(' and ')} of the ${lc}`);
     }
     if (ex.other && ex.other.trim()){
       out.push(zh ? `- 其他：${ex.other.trim()}` : `- Others: ${ex.other.trim()}`);
@@ -357,7 +358,8 @@ function buildAll(){
 // ---------- 事件 ----------
 $('#date').value = curDate;
 $('#date').addEventListener('change', e => { curDate = e.target.value || today(); curSerial = null; renderList(); renderEditor(); });
-$('#lang').addEventListener('change', updatePreview);
+try { const l = localStorage.getItem('usreport.lang'); if (l) $('#lang').value = l; } catch {}
+$('#lang').addEventListener('change', () => { try { localStorage.setItem('usreport.lang', lang()); } catch {} updatePreview(); });
 $('#btnAdd').addEventListener('click', addPatient);
 $('#newSerial').addEventListener('keydown', e => { if (e.key === 'Enter') addPatient(); });
 $('#patientList').addEventListener('click', e => { const li = e.target.closest('li'); if (li) select(li.dataset.s); });
